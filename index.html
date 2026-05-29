@@ -1,11 +1,1050 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mi Página</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DRP Masas — Sistema de Planificación</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0f1b2d;
+  --navy2:#152236;
+  --navy3:#1a2b42;
+  --navy4:#1f3450;
+  --border:#253d5a;
+  --border2:#2d4a6a;
+  --blue:#2a6dd9;
+  --blue-light:#3b82f6;
+  --blue-pale:#1e4080;
+  --text:#c8d8ec;
+  --text-dim:#6b8aaa;
+  --text-muted:#3d5878;
+  --white:#e8f0fa;
+  --green:#22c55e;
+  --red:#ef4444;
+  --amber:#f59e0b;
+  --cyan:#06b6d4;
+  --sidebar:220px;
+  --header:52px;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+html,body{height:100%;background:var(--navy);color:var(--text);font-family:var(--sans);overflow:hidden}
+
+/* LAYOUT */
+.app{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);
+  flex-shrink:0;
+  background:var(--navy2);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:10;
+}
+.sidebar-logo{
+  height:var(--header);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.logo-icon{
+  width:28px;height:28px;
+  background:var(--blue);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.logo-text{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--white);letter-spacing:0.02em}
+.logo-version{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:0.1em}
+
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.sidebar-nav::-webkit-scrollbar{width:3px}
+.sidebar-nav::-webkit-scrollbar-track{background:transparent}
+.sidebar-nav::-webkit-scrollbar-thumb{background:var(--border)}
+
+.nav-group{margin-bottom:2px}
+.nav-group-label{
+  font-size:9px;font-family:var(--mono);
+  color:var(--text-muted);letter-spacing:0.2em;
+  text-transform:uppercase;padding:12px 16px 4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;cursor:pointer;
+  font-size:13px;color:var(--text-dim);
+  transition:all 0.15s;border-left:2px solid transparent;
+  user-select:none;
+}
+.nav-item:hover{background:var(--navy3);color:var(--text)}
+.nav-item.active{
+  background:rgba(42,109,217,0.12);
+  color:var(--blue-light);
+  border-left-color:var(--blue-light);
+}
+.nav-item .nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-item .nav-label{flex:1}
+.nav-badge{
+  font-family:var(--mono);font-size:9px;
+  background:var(--blue-pale);color:var(--blue-light);
+  padding:1px 6px;border-radius:10px;
+}
+
+.sidebar-footer{
+  padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;gap:10px;
+}
+.user-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:#fff;flex-shrink:0;
+}
+.user-name{font-size:12px;color:var(--text);font-weight:500}
+.user-role{font-size:10px;color:var(--text-dim)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.topbar{
+  height:var(--header);flex-shrink:0;
+  background:var(--navy2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;gap:16px;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.page-title{font-size:14px;font-weight:600;color:var(--white)}
+.breadcrumb{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;
+  color:var(--green);
+  background:rgba(34,197,94,0.08);
+  border:1px solid rgba(34,197,94,0.2);
+  padding:4px 10px;border-radius:20px;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.btn-download{
+  display:flex;align-items:center;gap:6px;
+  background:var(--blue);color:#fff;
+  border:none;border-radius:6px;
+  font-family:var(--sans);font-size:12px;font-weight:500;
+  padding:7px 14px;cursor:pointer;transition:all 0.15s;
+  text-decoration:none;
+}
+.btn-download:hover{background:var(--blue-light)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* PAGE — INICIO */
+.welcome-banner{
+  background:linear-gradient(120deg,var(--navy3) 0%,rgba(42,109,217,0.15) 100%);
+  border:1px solid var(--border);border-radius:10px;
+  padding:24px 28px;margin-bottom:20px;
+  position:relative;overflow:hidden;
+}
+.welcome-banner::before{
+  content:'';position:absolute;right:-20px;top:-20px;
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(42,109,217,0.12),transparent 70%);
+}
+.welcome-tag{font-family:var(--mono);font-size:10px;color:var(--blue-light);letter-spacing:0.15em;margin-bottom:8px}
+.welcome-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:6px}
+.welcome-sub{font-size:13px;color:var(--text-dim);line-height:1.6;max-width:540px}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{
+  background:var(--navy2);border:1px solid var(--border);
+  border-radius:8px;padding:16px;position:relative;overflow:hidden;
+  transition:border-color 0.2s;
+}
+.kpi-card:hover{border-color:var(--border2)}
+.kpi-card-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px}
+.kpi-card-value{font-size:26px;font-weight:700;line-height:1;margin-bottom:6px;letter-spacing:-0.02em}
+.kpi-card-value.blue{color:var(--blue-light)}
+.kpi-card-value.green{color:var(--green)}
+.kpi-card-value.red{color:var(--red)}
+.kpi-card-value.amber{color:var(--amber)}
+.kpi-card-meta{font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.delta{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px}
+.delta.down{background:rgba(34,197,94,0.1);color:var(--green)}
+.delta.up{background:rgba(239,68,68,0.1);color:var(--red)}
+.delta.target{background:rgba(42,109,217,0.12);color:var(--blue-light)}
+.kpi-card-corner{
+  position:absolute;bottom:0;right:0;
+  width:56px;height:56px;
+  background:radial-gradient(circle at 100% 100%,rgba(42,109,217,0.08),transparent 70%);
+}
+
+/* 2-COL */
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.row-3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+
+/* PANELS */
+.panel{background:var(--navy2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.panel-title{font-size:12px;font-weight:600;color:var(--white);display:flex;align-items:center;gap:8px}
+.panel-title-dot{width:3px;height:14px;background:var(--blue-light);border-radius:2px}
+.panel-badge{font-family:var(--mono);font-size:9px;color:var(--text-dim);background:var(--navy3);padding:2px 8px;border-radius:10px}
+.panel-body{padding:16px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:280px}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--text-dim);
+  padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);
+  background:var(--navy3);
+}
+.data-table td{padding:9px 10px;border-bottom:1px solid rgba(37,61,90,0.4);color:var(--text)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(42,109,217,0.04)}
+.badge{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;letter-spacing:0.05em}
+.badge-a{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25)}
+.badge-b{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)}
+.badge-c{background:rgba(42,109,217,0.12);color:var(--blue-light);border:1px solid rgba(42,109,217,0.25)}
+.pct-bar-wrap{width:80px;height:5px;background:var(--navy3);border-radius:3px;display:inline-block;vertical-align:middle;overflow:hidden}
+.pct-bar{height:100%;border-radius:3px;background:var(--blue-light)}
+.pct-bar.red{background:var(--red)}
+.pct-bar.amber{background:var(--amber)}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:20px}
+.page-header h2{font-size:17px;font-weight:700;color:var(--white);margin-bottom:4px}
+.page-header p{font-size:12px;color:var(--text-dim)}
+
+/* FLOW STEPS */
+.flow-wrap{display:flex;align-items:center;gap:0;overflow-x:auto;padding:4px 0 8px}
+.flow-step{
+  flex:1;min-width:120px;text-align:center;
+  background:var(--navy3);border:1px solid var(--border);
+  padding:14px 10px;border-radius:6px;
+}
+.flow-step-n{font-family:var(--mono);font-size:9px;color:var(--blue-light);letter-spacing:0.15em;margin-bottom:5px}
+.flow-step-label{font-size:11px;font-weight:600;color:var(--white)}
+.flow-step-sub{font-size:10px;color:var(--text-dim);margin-top:3px}
+.flow-arr{color:var(--border2);font-size:16px;padding:0 6px;flex-shrink:0}
+
+/* PILOT TABLE */
+.pilot-wrap{overflow-x:auto}
+.pilot-table{width:100%;border-collapse:collapse;font-size:11px;min-width:650px}
+.pilot-table th{
+  font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text-dim);padding:8px 10px;background:var(--navy3);
+  border-bottom:1px solid var(--border);text-align:left;
+}
+.pilot-table td{padding:8px 10px;border-bottom:1px solid rgba(37,61,90,0.4);color:var(--text)}
+.pilot-table tr:hover td{background:rgba(42,109,217,0.04)}
+.pct-high{color:var(--green);font-weight:600;font-family:var(--mono);font-size:11px}
+.pct-med{color:var(--amber);font-family:var(--mono);font-size:11px}
+.center-label{color:var(--blue-light);font-family:var(--mono);font-size:10px}
+
+/* INDICATORS TABLE */
+.ind-table{width:100%;border-collapse:collapse;font-size:12px}
+.ind-table th{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:8px 12px;background:var(--navy3);border-bottom:1px solid var(--border);text-align:left}
+.ind-table td{padding:10px 12px;border-bottom:1px solid rgba(37,61,90,0.4);color:var(--text);vertical-align:middle}
+.ind-table tr:last-child td{border-bottom:none}
+.ind-table tr:hover td{background:rgba(42,109,217,0.04)}
+.prog-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar-bg{flex:1;height:4px;background:var(--navy3);border-radius:3px;overflow:hidden}
+.prog-bar{height:100%;border-radius:3px}
+.prog-val{font-family:var(--mono);font-size:10px;color:var(--text-dim);width:44px;text-align:right}
+
+/* INFO CARDS */
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.info-card{
+  background:var(--navy3);border:1px solid var(--border);
+  border-radius:8px;padding:16px;
+}
+.info-card-title{font-size:12px;font-weight:600;color:var(--white);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.info-card p{font-size:12px;color:var(--text-dim);line-height:1.7}
+.info-card ul{font-size:12px;color:var(--text-dim);line-height:1.8;padding-left:16px}
+
+/* RESPONSIVE SCROLL */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .row-2,.row-3{grid-template-columns:1fr}
+  .sidebar{width:52px}
+  .nav-label,.nav-badge,.logo-version,.user-name,.user-role,.nav-group-label{display:none}
+  .logo-text{display:none}
+  .sidebar-footer{justify-content:center}
+}
+</style>
 </head>
 <body>
-  <h1>¡Hola mundo!</h1>
-  <p>Mi primera página en GitHub Pages.</p>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">DRP Masas</div>
+      <div class="logo-version">v2026.1 · SISTEMA</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Principal</div>
+      <div class="nav-item active" onclick="navigate('inicio',this)">
+        <span class="nav-icon">⊞</span><span class="nav-label">Inicio</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Análisis</div>
+      <div class="nav-item" onclick="navigate('dashboard',this)">
+        <span class="nav-icon">◫</span><span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="navigate('forecasting',this)">
+        <span class="nav-icon">⌁</span><span class="nav-label">Forecasting</span><span class="nav-badge">SES</span>
+      </div>
+      <div class="nav-item" onclick="navigate('clustering',this)">
+        <span class="nav-icon">◎</span><span class="nav-label">Clustering ABC</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Distribución</div>
+      <div class="nav-item" onclick="navigate('replenishment',this)">
+        <span class="nav-icon">↻</span><span class="nav-label">Replenishment</span>
+      </div>
+      <div class="nav-item" onclick="navigate('piloto',this)">
+        <span class="nav-icon">▷</span><span class="nav-label">Prueba Piloto</span><span class="nav-badge">MAY</span>
+      </div>
+      <div class="nav-item" onclick="navigate('supply',this)">
+        <span class="nav-icon">⊛</span><span class="nav-label">Supply Chain Data</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Sistema</div>
+      <div class="nav-item" onclick="navigate('indicadores',this)">
+        <span class="nav-icon">≡</span><span class="nav-label">Indicadores KPI</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-avatar">EP</div>
+    <div>
+      <div class="user-name">E. Polo Ponce</div>
+      <div class="user-role">Ing. Industrial</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="topbar-title">Inicio</div>
+      <div class="breadcrumb" id="topbar-crumb">DRP Masas / Inicio</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><span class="status-dot"></span>Sistema Activo</div>
+      <a class="btn-download" href="Proyecto_Final_de_Ingeniería_Industrial__2_.pdf" download>⬇ Descargar PDF</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- PAGE: INICIO -->
+    <div class="page active" id="page-inicio">
+      <div class="welcome-banner">
+        <div class="welcome-tag">INGENIERÍA INDUSTRIAL · CADENA DE SUMINISTRO · 2026</div>
+        <div class="welcome-title">Sistema DRP Automatizado de Masas</div>
+        <div class="welcome-sub">Automatización del proceso de planificación de requerimientos de distribución para reducción de mermas en 73 tiendas de una cadena QSR nacional. Herramientas: Excel + SQL sobre SAP.</div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-card-label">Mermas Totales · Trim.</div>
+          <div class="kpi-card-value red">175,544</div>
+          <div class="kpi-card-meta"><span class="delta up">↑ problema estructural</span></div>
+          <div class="kpi-card-meta" style="margin-top:4px">unidades descartadas</div>
+          <div class="kpi-card-corner"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">Pérdida Anual Proyectada</div>
+          <div class="kpi-card-value red">S/ 466K</div>
+          <div class="kpi-card-meta"><span class="delta up">solo insumo masa</span></div>
+          <div class="kpi-card-meta" style="margin-top:4px">soles anuales</div>
+          <div class="kpi-card-corner"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">Ahorro Estimado Anual</div>
+          <div class="kpi-card-value green">S/ 139,897</div>
+          <div class="kpi-card-meta"><span class="delta down">↓ con DRP automatizado</span></div>
+          <div class="kpi-card-meta" style="margin-top:4px">soles de ahorro</div>
+          <div class="kpi-card-corner"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">Meta Reducción Merma</div>
+          <div class="kpi-card-value blue">≥ 30%</div>
+          <div class="kpi-card-meta"><span class="delta target">→ piloto: 67.7%</span></div>
+          <div class="kpi-card-meta" style="margin-top:4px">73 tiendas nacionales</div>
+          <div class="kpi-card-corner"></div>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Mermas Mensuales — Ene/Mar 2026</div>
+            <div class="panel-badge">UNIDADES</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap"><canvas id="cMermasMes"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Pareto por SKU</div>
+            <div class="panel-badge">% MERMA</div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap"><canvas id="cPareto"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><div class="panel-title-dot"></div>Flujo del DRP Automatizado</div>
+          <div class="panel-badge">PROCESO</div>
+        </div>
+        <div class="panel-body">
+          <div class="flow-wrap">
+            <div class="flow-step"><div class="flow-step-n">01</div><div class="flow-step-label">Extracción SQL</div><div class="flow-step-sub">SAP / Data</div></div>
+            <div class="flow-arr">→</div>
+            <div class="flow-step"><div class="flow-step-n">02</div><div class="flow-step-label">Pronóstico</div><div class="flow-step-sub">SES / PMP</div></div>
+            <div class="flow-arr">→</div>
+            <div class="flow-step"><div class="flow-step-n">03</div><div class="flow-step-label">Cálculo DRP</div><div class="flow-step-sub">Req. Neto</div></div>
+            <div class="flow-arr">→</div>
+            <div class="flow-step"><div class="flow-step-n">04</div><div class="flow-step-label">Plan Producción</div><div class="flow-step-sub">50 Batches</div></div>
+            <div class="flow-arr">→</div>
+            <div class="flow-step"><div class="flow-step-n">05</div><div class="flow-step-label">Distribución</div><div class="flow-step-sub">73 Tiendas</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <h2>Dashboard General</h2>
+        <p>Indicadores consolidados del sistema DRP — período Ene–May 2026</p>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-card-label">Impacto Económico Mensual</div>
+          <div class="kpi-card-value red">S/ 38,860</div>
+          <div class="kpi-card-meta"><span class="delta target">→ Meta: S/ 27,202</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">% Merma Promedio Nacional</div>
+          <div class="kpi-card-value amber">≈ 6%</div>
+          <div class="kpi-card-meta"><span class="delta target">→ Meta: ≤ 4.2%</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">Tiendas sobre 8% merma</div>
+          <div class="kpi-card-value red">15</div>
+          <div class="kpi-card-meta"><span class="delta target">→ Meta: ≤ 5 tiendas</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-label">Concentración Top 3 SKU</div>
+          <div class="kpi-card-value blue">86.4%</div>
+          <div class="kpi-card-meta"><span class="delta down">Pareto confirmado</span></div>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Impacto Económico por SKU</div>
+            <div class="panel-badge">MAR 2026</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cEcon"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Línea Base vs Objetivo</div>
+            <div class="panel-badge">RADAR</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cRadar"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: FORECASTING -->
+    <div class="page" id="page-forecasting">
+      <div class="page-header">
+        <h2>Forecasting — Modelos de Pronóstico</h2>
+        <p>Métodos de series de tiempo aplicados: SES (Suavización Exponencial Simple) y PMP (Promedio Móvil Ponderado)</p>
+      </div>
+      <div class="row-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Pronóstico vs Real — Masa 11"</div>
+            <div class="panel-badge">LA MARINA</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cForecast"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Comparativo MAPE por Centro</div>
+            <div class="panel-badge">ERROR %</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cMape"></canvas></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><div class="panel-title-dot"></div>Modelo Seleccionado por Centro y Masa</div>
+          <div class="panel-badge">SES / PMP</div>
+        </div>
+        <div class="panel-body">
+          <table class="data-table">
+            <thead><tr><th>Centro</th><th>Masa</th><th>Modelo</th><th>α / Ventana</th><th>Tendencia</th><th>Outliers</th><th>Bias</th></tr></thead>
+            <tbody>
+              <tr><td>La Marina</td><td>Masa 11"</td><td><span class="badge badge-a">SES</span></td><td>α moderado</td><td>No significativa</td><td>Bajo</td><td>Positivo bajo</td></tr>
+              <tr><td>La Marina</td><td>Masa 6"</td><td><span class="badge badge-a">SES</span></td><td>α moderado</td><td>No significativa</td><td>Bajo</td><td>Equilibrado</td></tr>
+              <tr><td>Aviación</td><td>Masa 11"</td><td><span class="badge badge-b">PMP</span></td><td>n=4</td><td>Leve</td><td>Medio</td><td>Equilibrado</td></tr>
+              <tr><td>Dark Kitchen</td><td>Masa 13"</td><td><span class="badge badge-a">SES</span></td><td>α moderado</td><td>No significativa</td><td>Alto (6)</td><td>Positivo bajo</td></tr>
+              <tr><td>Dark Kitchen</td><td>Masa 11"</td><td><span class="badge badge-a">SES</span></td><td>α moderado</td><td>No significativa</td><td>Medio</td><td>Equilibrado</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CLUSTERING -->
+    <div class="page" id="page-clustering">
+      <div class="page-header">
+        <h2>Clasificación ABC — Portafolio de Masas</h2>
+        <p>Segmentación por volumen de mermas y valor económico. Principio de Pareto aplicado a 5 SKU.</p>
+      </div>
+      <div class="row-3">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Tabla ABC</div>
+            <div class="panel-badge">5 SKU</div>
+          </div>
+          <div class="panel-body">
+            <table class="data-table">
+              <thead><tr><th>Tipo de Masa</th><th>Clase</th><th>Vol. Merma (un.)</th><th>% Total</th><th>Imp. Econ. (S/.)</th><th>% Econ.</th><th>Costo Unit.</th><th>Distribución</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Masa 11" (10 uds)</td>
+                  <td><span class="badge badge-a">CLASE A</span></td>
+                  <td>55,019</td>
+                  <td>31.3%</td>
+                  <td>20,564.05</td>
+                  <td>44.5%</td>
+                  <td>S/ 0.7736</td>
+                  <td><div class="pct-bar-wrap"><div class="pct-bar red" style="width:100%"></div></div></td>
+                </tr>
+                <tr>
+                  <td>Masa 6" (15 uds)</td>
+                  <td><span class="badge badge-a">CLASE A</span></td>
+                  <td>61,560</td>
+                  <td>35.1%</td>
+                  <td>8,232.23</td>
+                  <td>17.8%</td>
+                  <td>S/ 0.3708</td>
+                  <td><div class="pct-bar-wrap"><div class="pct-bar red" style="width:80%"></div></div></td>
+                </tr>
+                <tr>
+                  <td>Masa 8" (15 uds)</td>
+                  <td><span class="badge badge-a">CLASE A</span></td>
+                  <td>35,055</td>
+                  <td>20.0%</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>S/ 0.5302</td>
+                  <td><div class="pct-bar-wrap"><div class="pct-bar amber" style="width:57%"></div></div></td>
+                </tr>
+                <tr>
+                  <td>Masa 13" (8 uds)</td>
+                  <td><span class="badge badge-b">CLASE B</span></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>7,851.90</td>
+                  <td>17.0%</td>
+                  <td>S/ 1.0636</td>
+                  <td><div class="pct-bar-wrap"><div class="pct-bar" style="width:38%"></div></div></td>
+                </tr>
+                <tr>
+                  <td>Masa 15" (6 uds)</td>
+                  <td><span class="badge badge-c">CLASE C</span></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>S/ 1.4217</td>
+                  <td><div class="pct-bar-wrap"><div class="pct-bar" style="width:15%"></div></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Distribución Económica</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="cDonut"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: REPLENISHMENT -->
+    <div class="page" id="page-replenishment">
+      <div class="page-header">
+        <h2>Replenishment — Parámetros Logísticos</h2>
+        <p>Red de distribución diferenciada por ámbito geográfico — 73 tiendas nacionales</p>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-card-label">Lima Metropolitana</div><div class="kpi-card-value blue">53</div><div class="kpi-card-meta">tiendas · 72.6%</div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Callao</div><div class="kpi-card-value blue">6</div><div class="kpi-card-meta">tiendas · 8.2%</div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Provincias</div><div class="kpi-card-value amber">14</div><div class="kpi-card-meta">tiendas · 19.2%</div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Capacidad Máx. Planta</div><div class="kpi-card-value green">50</div><div class="kpi-card-meta">batches por ciclo</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><div class="panel-title-dot"></div>Parámetros por Ámbito Geográfico</div>
+          <div class="panel-badge">SUPPLY CHAIN</div>
+        </div>
+        <div class="panel-body">
+          <table class="data-table">
+            <thead><tr><th>Parámetro</th><th>Lima Metropolitana</th><th>Callao</th><th>Provincias</th></tr></thead>
+            <tbody>
+              <tr><td>Modo de transporte</td><td>Camión refrigerado</td><td>Camión refrigerado</td><td>Transporte interprovincial refrigerado</td></tr>
+              <tr><td>Lead time típico</td><td>1 día</td><td>1 día</td><td>2 a 3 días</td></tr>
+              <tr><td>Frecuencia de despacho</td><td>2 a 3 / semana</td><td>2 a 3 / semana</td><td>1 a 2 / semana</td></tr>
+              <tr><td>Día de inicio de uso</td><td>Día 3</td><td>Día 3</td><td>Día 4 o Día 5</td></tr>
+              <tr><td>Ventana útil en tienda</td><td>5 días</td><td>5 días</td><td>3 a 4 días</td></tr>
+              <tr><td>Stock de seguridad</td><td>Bajo</td><td>Bajo</td><td>Medio a alto</td></tr>
+              <tr><td>Riesgo operativo dominante</td><td>Variabilidad demanda</td><td>Variabilidad demanda</td><td>Cobertura útil reducida</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: PILOTO -->
+    <div class="page" id="page-piloto">
+      <div class="page-header">
+        <h2>Prueba Piloto — 01 al 15 de Mayo 2026</h2>
+        <p>Comparativo Merma Real vs DRP Automatizado — centros: La Marina, Aviación, Dark Kitchen</p>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-card-label">Merma Real Total Piloto</div><div class="kpi-card-value red">1,458 un.</div><div class="kpi-card-meta">3 centros · 5 masas</div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Merma con DRP</div><div class="kpi-card-value green">471 un.</div><div class="kpi-card-meta">reducción efectiva</div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Reducción Global</div><div class="kpi-card-value green">67.7%</div><div class="kpi-card-meta"><span class="delta down">↓ supera meta 30%</span></div></div>
+        <div class="kpi-card"><div class="kpi-card-label">Ahorro Total Piloto</div><div class="kpi-card-value green">S/ 696.11</div><div class="kpi-card-meta">15 días · 3 centros</div></div>
+      </div>
+      <div class="row-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>Merma Real vs DRP — por Centro</div>
+            <div class="panel-badge">UNIDADES</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cPilotoBars"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><div class="panel-title-dot"></div>% Reducción por Tipo de Masa</div>
+            <div class="panel-badge">3 CENTROS</div>
+          </div>
+          <div class="panel-body"><div class="chart-wrap tall"><canvas id="cReduccion"></canvas></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><div class="panel-title-dot"></div>Detalle por Centro y Masa</div>
+          <div class="panel-badge">MAY 2026</div>
+        </div>
+        <div class="panel-body">
+          <div class="pilot-wrap">
+            <table class="pilot-table">
+              <thead><tr><th>Centro</th><th>Masa</th><th>Merma Real</th><th>Merma DRP</th><th>Reducción</th><th>Ahorro S/.</th><th>% Reducción</th></tr></thead>
+              <tbody>
+                <tr><td class="center-label" rowspan="5">La Marina</td><td>Masa 15"</td><td>16</td><td>4</td><td>12</td><td>17.06</td><td class="pct-high">75.0%</td></tr>
+                <tr><td>Masa 13"</td><td>65</td><td>32</td><td>33</td><td>35.10</td><td class="pct-med">50.8%</td></tr>
+                <tr><td>Masa 11"</td><td>320</td><td>25</td><td>295</td><td>228.21</td><td class="pct-high">92.2%</td></tr>
+                <tr><td>Masa 8"</td><td>145</td><td>41</td><td>104</td><td>55.14</td><td class="pct-high">71.7%</td></tr>
+                <tr><td>Masa 6"</td><td>112</td><td>54</td><td>58</td><td>21.51</td><td class="pct-med">51.8%</td></tr>
+                <tr><td class="center-label" rowspan="5">Aviación</td><td>Masa 15"</td><td>32</td><td>12</td><td>20</td><td>28.43</td><td class="pct-high">62.5%</td></tr>
+                <tr><td>Masa 13"</td><td>57</td><td>18</td><td>39</td><td>41.48</td><td class="pct-high">68.4%</td></tr>
+                <tr><td>Masa 11"</td><td>150</td><td>49</td><td>101</td><td>78.13</td><td class="pct-high">67.3%</td></tr>
+                <tr><td>Masa 8"</td><td>91</td><td>52</td><td>39</td><td>20.68</td><td class="pct-med">42.9%</td></tr>
+                <tr><td>Masa 6"</td><td>129</td><td>46</td><td>83</td><td>30.78</td><td class="pct-high">64.3%</td></tr>
+                <tr><td class="center-label" rowspan="5">Dark Kitchen</td><td>Masa 15"</td><td>18</td><td>8</td><td>10</td><td>14.22</td><td class="pct-med">55.6%</td></tr>
+                <tr><td>Masa 13"</td><td>64</td><td>22</td><td>42</td><td>44.67</td><td class="pct-high">65.6%</td></tr>
+                <tr><td>Masa 11"</td><td>84</td><td>46</td><td>38</td><td>29.40</td><td class="pct-med">45.2%</td></tr>
+                <tr><td>Masa 8"</td><td>86</td><td>27</td><td>59</td><td>31.28</td><td class="pct-high">68.6%</td></tr>
+                <tr><td>Masa 6"</td><td>89</td><td>35</td><td>54</td><td>20.02</td><td class="pct-high">60.7%</td></tr>
+                <tr style="background:rgba(42,109,217,0.06)"><td colspan="2" style="font-weight:600;color:var(--white)">TOTAL GLOBAL</td><td style="font-weight:600;color:var(--red)">1,458</td><td style="font-weight:600;color:var(--green)">471</td><td style="font-weight:600;color:var(--green)">987</td><td style="font-weight:600;color:var(--green)">696.11</td><td class="pct-high">67.7%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SUPPLY -->
+    <div class="page" id="page-supply">
+      <div class="page-header">
+        <h2>Supply Chain Data</h2>
+        <p>Datos operativos de la red de distribución y la planta central de producción</p>
+      </div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-title">🏭 Planta Central de Producción</div>
+          <ul>
+            <li>Capacidad máxima: <b>50 batches</b> por ciclo productivo</li>
+            <li>5 tipos de masa: 6", 8", 11", 13", 15"</li>
+            <li>Vida útil del producto: <b>8 días</b> (Día 1 al Día 8)</li>
+            <li>Día 8: descarte obligatorio como merma</li>
+            <li>Distribución ejecutada por subgerencia de Logística</li>
+          </ul>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">🔧 Herramientas Utilizadas</div>
+          <ul>
+            <li><b>SAP:</b> sistema ERP corporativo (fuente de data)</li>
+            <li><b>SQL:</b> consultas sobre base de datos SAP</li>
+            <li><b>Excel:</b> plantillas de pronóstico y DRP</li>
+            <li>Sin inversión en software adicional</li>
+            <li>Metodología replicable a otros insumos</li>
+          </ul>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">📋 Variables Operativas del DRP</div>
+          <ul>
+            <li>Pronóstico de demanda (SES / PMP)</li>
+            <li>Stock disponible en tienda</li>
+            <li>Órdenes en tránsito (pendientes de recepción)</li>
+            <li>Stock de seguridad (buffer)</li>
+            <li>Lead time por ámbito geográfico</li>
+            <li>Restricciones de capacidad productiva</li>
+          </ul>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">🎯 Centros Piloto Seleccionados</div>
+          <ul>
+            <li><b>La Marina</b> — alta frecuencia, merma elevada</li>
+            <li><b>Aviación</b> — perfil de demanda representativo</li>
+            <li><b>Dark Kitchen Aviación</b> — 13% merma (caso extremo)</li>
+            <li>Período piloto: 01–15 mayo 2026</li>
+            <li>Data de entrenamiento: ene–abr 2026 (120 días)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: INDICADORES -->
+    <div class="page" id="page-indicadores">
+      <div class="page-header">
+        <h2>Indicadores KPI — Línea Base vs Objetivo</h2>
+        <p>Tabla consolidada de indicadores. Objetivo calculado aplicando meta de reducción del 30%.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><div class="panel-title-dot"></div>Indicadores Volumétricos, Económicos y Operativos</div>
+          <div class="panel-badge">TABLA 15</div>
+        </div>
+        <div class="panel-body">
+          <table class="ind-table">
+            <thead><tr><th>Indicador</th><th>Unidad</th><th>Línea Base Actual</th><th>Objetivo Propuesto</th><th>Cumplimiento</th></tr></thead>
+            <tbody>
+              <tr><td colspan="5" style="padding:8px 12px;font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--blue-light);background:rgba(42,109,217,0.06)">A. INDICADORES VOLUMÉTRICOS</td></tr>
+              <tr>
+                <td>Mermas totales trimestrales</td><td>Unidades</td><td style="color:var(--red)">175,543.93</td><td style="color:var(--green)">≤ 122,880.75</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:70%;background:var(--red)"></div></div><div class="prog-val">actual</div></div></td>
+              </tr>
+              <tr>
+                <td>Mermas promedio mensuales</td><td>Unidades</td><td style="color:var(--red)">58,514.64</td><td style="color:var(--green)">≤ 40,960.25</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:70%;background:var(--red)"></div></div><div class="prog-val">actual</div></div></td>
+              </tr>
+              <tr>
+                <td>Concentración Top 3 SKU</td><td>%</td><td style="color:var(--amber)">86.4%</td><td>Caracterización</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:86%;background:var(--amber)"></div></div><div class="prog-val">86.4%</div></div></td>
+              </tr>
+              <tr><td colspan="5" style="padding:8px 12px;font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--blue-light);background:rgba(42,109,217,0.06)">B. INDICADORES ECONÓMICOS</td></tr>
+              <tr>
+                <td>Impacto económico mensual</td><td>S/</td><td style="color:var(--red)">38,860.41</td><td style="color:var(--green)">≤ 27,202.29</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:70%;background:var(--red)"></div></div><div class="prog-val">actual</div></div></td>
+              </tr>
+              <tr>
+                <td>Pérdida proyectada anual</td><td>S/</td><td style="color:var(--red)">466,324.92</td><td style="color:var(--green)">≤ 326,427.44</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:70%;background:var(--red)"></div></div><div class="prog-val">actual</div></div></td>
+              </tr>
+              <tr>
+                <td>Ahorro esperado anual</td><td>S/</td><td>—</td><td style="color:var(--green)">≥ 139,897.48</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:100%;background:var(--green)"></div></div><div class="prog-val">meta</div></div></td>
+              </tr>
+              <tr><td colspan="5" style="padding:8px 12px;font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--blue-light);background:rgba(42,109,217,0.06)">C. INDICADORES DE VARIABILIDAD OPERATIVA</td></tr>
+              <tr>
+                <td>% merma promedio nacional</td><td>%</td><td style="color:var(--amber)">≈ 6%</td><td style="color:var(--green)">≤ 4.2%</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:60%;background:var(--amber)"></div></div><div class="prog-val">6%</div></div></td>
+              </tr>
+              <tr>
+                <td>Rango variabilidad tiendas</td><td>min–max</td><td style="color:var(--red)">1% — 16%</td><td style="color:var(--green)">Convergencia</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:100%;background:var(--red)"></div></div><div class="prog-val">16%</div></div></td>
+              </tr>
+              <tr>
+                <td>Tiendas sobre 8% de merma</td><td>N.° tiendas</td><td style="color:var(--red)">15</td><td style="color:var(--green)">≤ 5</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:100%;background:var(--red)"></div></div><div class="prog-val">15</div></div></td>
+              </tr>
+              <tr><td colspan="5" style="padding:8px 12px;font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--blue-light);background:rgba(42,109,217,0.06)">D. INDICADORES DE CALIDAD DEL PROCESO</td></tr>
+              <tr>
+                <td>Exactitud del pronóstico (MAPE)</td><td>%</td><td style="color:var(--text-dim)">No medido</td><td style="color:var(--green)">≤ 15%</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:0%;background:var(--blue-light)"></div></div><div class="prog-val">nuevo</div></div></td>
+              </tr>
+              <tr>
+                <td>Tiempo procesamiento DRP</td><td>Horas/ciclo</td><td style="color:var(--text-dim)">No medido</td><td style="color:var(--green)">≤ 2 horas</td>
+                <td><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:0%;background:var(--blue-light)"></div></div><div class="prog-val">nuevo</div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// NAV
+const pages={
+  inicio:{title:'Inicio',crumb:'DRP Masas / Inicio'},
+  dashboard:{title:'Dashboard',crumb:'DRP Masas / Dashboard'},
+  forecasting:{title:'Forecasting',crumb:'DRP Masas / Forecasting'},
+  clustering:{title:'Clustering ABC',crumb:'DRP Masas / Clustering ABC'},
+  replenishment:{title:'Replenishment',crumb:'DRP Masas / Replenishment'},
+  piloto:{title:'Prueba Piloto',crumb:'DRP Masas / Prueba Piloto'},
+  supply:{title:'Supply Chain Data',crumb:'DRP Masas / Supply Chain Data'},
+  indicadores:{title:'Indicadores KPI',crumb:'DRP Masas / Indicadores KPI'},
+};
+
+function navigate(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('topbar-title').textContent=pages[id].title;
+  document.getElementById('topbar-crumb').textContent=pages[id].crumb;
+}
+
+// CHART DEFAULTS
+Chart.defaults.color='#6b8aaa';
+Chart.defaults.font.family="'DM Mono',monospace";
+Chart.defaults.font.size=10;
+const G='rgba(37,61,90,0.5)';
+const B='#2a6dd9';const BL='#3b82f6';
+const R='#ef4444';const GR='#22c55e';
+const AM='#f59e0b';const CY='#06b6d4';
+
+// MERMAS MES
+new Chart(document.getElementById('cMermasMes'),{
+  type:'bar',
+  data:{
+    labels:['Enero 2026','Febrero 2026','Marzo 2026'],
+    datasets:[{
+      label:'Mermas (uds)',
+      data:[61652.70,55995.76,57895.47],
+      backgroundColor:['rgba(239,68,68,0.6)','rgba(239,68,68,0.45)','rgba(239,68,68,0.55)'],
+      borderColor:R,borderWidth:1,borderRadius:3,
+    },{
+      label:'Promedio mensual',
+      data:[58514.64,58514.64,58514.64],
+      type:'line',borderColor:BL,borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:G}},y:{grid:{color:G},ticks:{callback:v=>v.toLocaleString()}}}}
+});
+
+// PARETO
+new Chart(document.getElementById('cPareto'),{
+  type:'bar',
+  data:{
+    labels:['Masa 6"','Masa 11"','Masa 8"','Masa 13"','Masa 15"'],
+    datasets:[{
+      data:[35.1,31.3,20.0,8.6,5.0],
+      backgroundColor:[R+'99',AM+'99',BL+'99',CY+'99',GR+'99'],
+      borderColor:[R,AM,BL,CY,GR],borderWidth:1,borderRadius:3,yAxisID:'y'
+    },{
+      type:'line',data:[35.1,66.4,86.4,95.0,100.0],
+      borderColor:BL,borderWidth:2,pointBackgroundColor:BL,pointRadius:3,fill:false,yAxisID:'y2'
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{color:G}},
+      y:{grid:{color:G},ticks:{callback:v=>v+'%'},max:45},
+      y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'%'},max:115}
+    }}
+});
+
+// ECONÓMICO
+new Chart(document.getElementById('cEcon'),{
+  type:'bar',
+  data:{
+    labels:['Masa 11"','Masa 6"','Masa 13"','Masa 8"','Masa 15"'],
+    datasets:[{
+      label:'Impacto S/.',
+      data:[20564.05,8232.23,7851.90,0,0],
+      backgroundColor:[R+'88',AM+'88',BL+'88',CY+'88',GR+'88'],
+      borderColor:[R,AM,BL,CY,GR],borderWidth:1,borderRadius:3
+    }]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:G},ticks:{callback:v=>'S/'+v.toLocaleString()}},y:{grid:{color:G}}}}
+});
+
+// RADAR
+new Chart(document.getElementById('cRadar'),{
+  type:'radar',
+  data:{
+    labels:['Mermas Trim.','Impacto Econ.','Variabilidad','Tiendas Riesgo','Merma %'],
+    datasets:[{
+      label:'Línea Base',
+      data:[100,100,100,100,100],
+      backgroundColor:'rgba(239,68,68,0.12)',borderColor:R,borderWidth:2,pointBackgroundColor:R,pointRadius:3
+    },{
+      label:'Objetivo',
+      data:[70,70,60,33,70],
+      backgroundColor:'rgba(42,109,217,0.1)',borderColor:BL,borderWidth:2,pointBackgroundColor:BL,pointRadius:3
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{r:{grid:{color:G},angleLines:{color:G},ticks:{display:false},pointLabels:{color:'#6b8aaa',font:{size:10}}}},
+    plugins:{legend:{labels:{color:'#6b8aaa',font:{size:10},padding:12,boxWidth:10}}}}
+});
+
+// FORECAST SIMULADO
+new Chart(document.getElementById('cForecast'),{
+  type:'line',
+  data:{
+    labels:['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6','Sem 7','Sem 8'],
+    datasets:[{
+      label:'Consumo Real',
+      data:[820,760,890,810,780,840,800,770],
+      borderColor:BL,borderWidth:2,pointBackgroundColor:BL,pointRadius:3,fill:false
+    },{
+      label:'Pronóstico SES',
+      data:[null,null,null,null,800,820,810,790],
+      borderColor:GR,borderDash:[5,4],borderWidth:2,pointBackgroundColor:GR,pointRadius:3,fill:false
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#6b8aaa',font:{size:10},padding:12,boxWidth:10}}},
+    scales:{x:{grid:{color:G}},y:{grid:{color:G}}}}
+});
+
+// MAPE
+new Chart(document.getElementById('cMape'),{
+  type:'bar',
+  data:{
+    labels:['Marina 11"','Marina 6"','Marina 8"','Aviación 11"','Aviación 6"','DK 11"','DK 13"'],
+    datasets:[{
+      label:'MAPE %',
+      data:[8.2,10.5,9.8,12.1,11.3,13.5,14.2],
+      backgroundColor:BL+'88',borderColor:BL,borderWidth:1,borderRadius:3
+    },{
+      type:'line',data:[15,15,15,15,15,15,15],
+      borderColor:R,borderDash:[5,4],borderWidth:1.5,pointRadius:0,label:'Límite (15%)'
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#6b8aaa',font:{size:10},padding:12,boxWidth:10}}},
+    scales:{x:{grid:{color:G}},y:{grid:{color:G},ticks:{callback:v=>v+'%'},max:20}}}
+});
+
+// DONUT
+new Chart(document.getElementById('cDonut'),{
+  type:'doughnut',
+  data:{
+    labels:['Masa 11" (44.5%)','Masa 6" (17.8%)','Masa 13" (17.0%)','Otros'],
+    datasets:[{
+      data:[20564,8232,7852,9518],
+      backgroundColor:[R+'bb',AM+'bb',BL+'bb','#253d5a'],
+      borderColor:'#152236',borderWidth:2,hoverOffset:6
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+    plugins:{legend:{position:'bottom',labels:{color:'#6b8aaa',font:{size:10},padding:10,boxWidth:10}}}}
+});
+
+// PILOTO BARS
+new Chart(document.getElementById('cPilotoBars'),{
+  type:'bar',
+  data:{
+    labels:['La Marina','Aviación','Dark Kitchen'],
+    datasets:[{
+      label:'Merma Real',
+      data:[658,459,341],
+      backgroundColor:R+'88',borderColor:R,borderWidth:1,borderRadius:3
+    },{
+      label:'Merma DRP',
+      data:[156,177,138],
+      backgroundColor:GR+'88',borderColor:GR,borderWidth:1,borderRadius:3
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#6b8aaa',font:{size:10},padding:12,boxWidth:10}}},
+    scales:{x:{grid:{color:G}},y:{grid:{color:G}}}}
+});
+
+// REDUCCION
+new Chart(document.getElementById('cReduccion'),{
+  type:'bar',
+  data:{
+    labels:['Masa 11"','Masa 13"','Masa 15"','Masa 6"','Masa 8"'],
+    datasets:[{
+      label:'% Reducción',
+      data:[78.3,61.3,63.6,59.1,62.7],
+      backgroundColor:[GR+'88',BL+'88',CY+'88',AM+'88',R+'88'],
+      borderColor:[GR,BL,CY,AM,R],borderWidth:1,borderRadius:3
+    },{
+      type:'line',data:[30,30,30,30,30],
+      borderColor:R,borderDash:[5,4],borderWidth:1.5,pointRadius:0,label:'Meta (30%)'
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#6b8aaa',font:{size:10},padding:12,boxWidth:10}}},
+    scales:{x:{grid:{color:G}},y:{grid:{color:G},ticks:{callback:v=>v+'%'},max:100}}}
+});
+</script>
 </body>
 </html>
